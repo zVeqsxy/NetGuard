@@ -1,7 +1,6 @@
 import sys
 import random
 import time
-import threading
 
 def loadingHack(thread_):
     chaine = "[*] Performing database operations..."
