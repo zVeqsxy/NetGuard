@@ -229,8 +229,6 @@ def deleteUser():
         print(" No user found.")
         return
 
-
-
 def main():
     try:
         header()
