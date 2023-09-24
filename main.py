@@ -13,14 +13,17 @@ import re
 
 from classes.MySQL import MySqlCommands
 from classes.IPScan import IPScanner
+from classes.PacketSniffing import PacketSniffing
 from lib.loading import loadingHack, loadingUpper, loadingTextPrint
-from lib.menu import clear_prompt, header, say_good_bye, input_txt, mainOptions, toolsOptions, usersOptions
-from lib.help import mainHelp, toolsHelp, usersHelp
+from lib.menu import clear_prompt, header, sayGoodBye, inputTxt, main_options, tools_options, users_options
+from lib.help import main_help, tools_help, users_help
 
 scanner = IPScanner()
 mysql = MySqlCommands()
+sniffer = PacketSniffing()
 
-def startloading():
+# start the loading animation until the scan for the connected devices is done
+def startLoading():
     num = random.choice([1, 2, 3])
 
     setup_thread = threading.Thread(target=scan)
@@ -39,7 +42,7 @@ def startloading():
 
 # ping and temporarly save every active ip, if not in database = insert into database
 def scan():
-    all_mac_addr = mysql.getAllMacAddress()
+    all_stored_mac_addr = mysql.getAllMacAddress()
 
     active_addr = scanner.startPing()
     active_mac = []
@@ -47,76 +50,68 @@ def scan():
 
     for addr in active_addr:
         ip, mac = addr.split("|")
-        active_ip.append(ip)
-        active_mac.append(mac)
+        if mac not in all_stored_mac_addr:
+            active_ip.append(ip)
+            active_mac.append(mac)
 
-    for i in range(len(active_mac)):
-        if active_mac[i] not in all_mac_addr:
-            mysql.insertUser(IP_address=active_ip[i], Mac_address=active_mac[i])
+    for ip, mac in zip(active_ip, active_mac):
+        mysql.insertUser(IP_address=ip, Mac_address=mac)
+        print(" New user inserted: ", ip, mac)
 
 def sniffing():
     print("\n [1] Sniff all packets on the network \n [2] Sniff packets for a specific user")
-    location_choice = int(input(" Enter your choice: "))
+    choice = input(" Enter your choice: ")
 
-    print("\n [1] All interfaces \n [2] Specific interface \n")
-    interface_choice = int(input(" Enter your choice: "))
+    if choice == "1":
+        filter = ""
+    elif choice == "2":
+        users, users_ID = displayAllUsers()
+        user_pick = int(input(" Enter the ID of your desired user: "))
+
+        if user_pick not in users_ID:
+            print(" This ID does not exist.")
+            return
+
+        found_user = None
+        for user in users:
+            if user_pick == user[0]:
+                found_user = user
+                break
+
+        if found_user:
+            filter = "host " + found_user[5]
+        else:
+            print(" No user found.")
+            return
+    else:
+        print(" Invalid choice.")
+        return
+    
+    print("\n [1] Sniff on all interfaces \n [2] Sniff on a specific interface \n")
+    interface_choice = input(" Enter your choice: ")
 
     interfaces = scanner.scanInterfaces()
 
-    if interface_choice == 1:
-        if location_choice == 1:
-            packets = sniff(filter="", count=10, iface=interfaces)
-
-        elif location_choice == 2:
-            _, users_ID = displayAllUsers()
-            try: 
-                id = int(input(" Enter the ID of your desired user: "))
-                if id not in users_ID:
-                    print(" This ID does not exist.")
-                    return
-
-                packets = sniff(filter="host " + ip, count=10, iface=interfaces)
-
-            except:
-                print(" Invalid input.")
+    if len(interfaces) == 0:
+        print(" No interfaces found.")
+        return
+    elif len(interfaces) == 1:
+        print(f" Only one interface found: {''.join(interfaces)}. Sniffing on that interface..")
+    else:
+        if interface_choice == "2":
+            print(f" Available interfaces: {interfaces}")
+            interface = [input(" Enter your desired interface: ")]
+            if interface not in interfaces:
+                print(" Invalid interface.")
                 return
-
-# packets = sniff(filter="", count=10, iface=interfaces)
-# packets = sniff(filter="host " + ip, count=10, iface=interfaces)
-# packets = sniff(filter="ether host " + mac, count=10, iface=interfaces)
-
-
-    elif interface_choice == 2:
-        for i, interface in enumerate(interfaces):
-            print(f"{i}. {interface}")
-
-        try:
-            choice3 = int(input("\n Enter your choice: "))
-            interface = interfaces[choice3 - 1]
-        except:
-            print("Invalid choice")
+        elif interface_choice != "1":
+            print(" Invalid choice.")
             return
 
-        if location_choice == 1:
-            packets = sniff(filter="", count=10, iface=interface)
-        elif location_choice == 2:
-            ip = input("Enter IP address: ")
-            packets = sniff(filter="host " + ip, count=10, iface=interface)
-        elif location_choice == 3:
-            mac = input("Enter MAC address: ")
-            packets = sniff(filter="ether host " + mac, count=10, iface=interface)
-
-    else:
-        print("Invalid choice")
-        return
-
-    if packets:
-        return packets
-    
-    else:
-        print("No packets found")
-        return
-
+    print(" Starting to capture packets..")
+    packets = sniffer.capturePackets(interfaces, filter)
+    print(" Captured packets: ")
+    print(packets)
 
 ################################################################################################################################################################
 ################################################################################################################################################################
@@ -158,7 +153,6 @@ def displayAllUsers():
     table = tabulate(data, headers=headers, tablefmt="fancy_grid", showindex="never")
     print(table)
     return users, users_ID
-
 
 def addUser():
     print(" If there's something you dont know, just press Enter.")
@@ -206,7 +200,7 @@ def editUser():
     choice = int(input("\n [1] Fname \n [2] Lname \n [3] Description \n [4] Blocked websites \n\n Pick something to edit: "))
     column = elements[choice]
     new_value = input(f"Enter new {column}: ")
-    mysql.updateUser(column=column, new_value=new_value, ID_=user_pick)
+    mysql.updateUser(column=column, new_value=new_value, ID=user_pick)
 
 def deleteUser():
     users, users_ID = displayAllUsers()
@@ -228,103 +222,115 @@ def deleteUser():
     else:
         print(" No user found.")
         return
+    
+############################################################
 
-def main():
-    try:
-        header()
-        print(mainOptions)
-        while True:
-            choice = input_txt("~")
+def tools():
+    header()
+    print(tools_options)
 
-            # TOOLS
-            if choice == "1":
+    while True:
+        choice = inputTxt("Tools")
+        match choice:
+            case "1":
                 header()
-                print(toolsOptions)
+                scan()
+                scanner.displayActiveAddress()
+                print(tools_options)
 
-                while True:
-                    choice = input_txt("Tools")
-                    if choice == "1":              
-                        header()
-                        scan()
-                        scanner.displayActiveAddress()
-                        print(toolsOptions)
+            # TODO: make the function to capture packets
+            case "2":
+                sniffing()
 
-                    elif choice == "2":            
-                        print("\n Coming soon..")
+            # TODO: make the function to block websites
+            case "3":
+                print("\n Coming soon..")
 
-                    elif choice == "3":            
-                        print("\n Coming soon..")
-
-                    elif choice == "b":
-                        header()
-                        print(mainOptions)
-                        break
-                    
-                    elif choice == "h":
-                        print(toolsHelp)
-                    
-                    elif choice == "c":
-                        header()
-                        print(toolsOptions)
-
-                    elif choice == "e":
-                        say_good_bye()
-                        sys.exit(1)
-
-            # USERS
-            elif choice == "2":
+            case "b":
                 header()
-                print(usersOptions)
-
-                while True:
-                    choice = input_txt("Users")
-                    if choice == "1":                   
-                        header()
-                        displayAllUsers()
-                        print(usersOptions)
-
-                    elif choice == "2":                 
-                        addUser()
-
-                    elif choice == "3":                
-                        header()
-                        editUser()
-
-                    elif choice == "4":                 
-                        header()
-                        deleteUser()
-
-                    elif choice == "b":
-                        header()
-                        print(mainOptions)
-                        break
-                    
-                    elif choice == "h":
-                        print(usersHelp)
-                    
-                    elif choice == "c":
-                        header()
-                        print(usersOptions)
-
-                    elif choice == "e":
-                        say_good_bye()
-                        sys.exit(1)
-
-            elif choice == "h":
-                print(mainHelp)
-
-            elif choice == "c":
-                header()
-                print(mainOptions)
-
-            elif choice == "e":
-                say_good_bye()
+                print(main_options)
                 break
 
-            else:
-                return main()
+            case "h":
+                print(tools_help)
 
+            case "c":
+                header()
+                print(tools_options)
+
+            case "e":
+                menu["e"]()
+
+def users():
+    header()
+    print(users_options)
+
+    while True:
+        choice = inputTxt("Users")
+        
+        match choice:
+            case "1":
+                header()
+                displayAllUsers()
+                print(users_options)
+            
+            case "2":
+                addUser()
+
+            case "3":
+                header()
+                editUser()
+
+            case "4":
+                header()
+                deleteUser()
+
+            case "b":
+                header()
+                print(main_options)
+                break
+
+            case "h":
+                print(users_help)
+
+            case "c":
+                header()
+                print(users_options)
+
+            case "e":
+                menu["e"]()
+                
+menu = {
+    "1": tools,
+    "2": users,
+    "h": lambda: print(main_help),
+    "c": lambda: (header(), print(main_options)),
+    "e": lambda: sayGoodBye(sayGoodBye(), sys.exit(1))
+}
+
+def main():
+    header()
+    print(main_options)
+    while True:
+        choice = inputTxt("~")
+
+        if choice in menu:
+            menu[choice]()
+
+if __name__ == "__main__":
+    try:
+        # startLoading()
+        main()
     except Exception as e:
         print(e)
 
-main()
+# packets = sniff(filter="", count=10, iface=interfaces)
+# packets = sniff(filter="host " + ip, count=10, iface=interfaces)
+# packets = sniff(filter="ether host " + mac, count=10, iface=interfaces)
+
+
+
+
+# 
+# IPScan.py: remove the ip address, add the socket function to get the ip address 
+# option to continue if database is not connected, but all database operations wont be available

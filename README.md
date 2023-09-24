@@ -12,9 +12,8 @@ This project is a network monitoring and user management tool built using python
 
 NetGuard is a Python-based network monitoring and user management tool that allows you to scan the network, monitor network traffic, and manage users and their information. It provides functionalities to ping active IP addresses and sniff packets on the network, add/edit/delete users, and display their information.
 
---------------
 
-**Note: This project is still under development and is a work in progress.**
+### **Note: This project is still under development and is a work in progress.**
 
 Please keep in mind that the code in this repository may not be fully optimized, efficient, or feature-complete. It is a representation of the current state of development and may contain bugs or incomplete functionality.
 
@@ -38,7 +37,7 @@ Please keep in mind that the code in this repository may not be fully optimized,
     git clone https://github.com/zVeqsxy/NetGuard.git
     ```
 
-2. Change to the project directory:
+2. Navigate to the project directory:
 
     ``` bash
     cd NetGuard

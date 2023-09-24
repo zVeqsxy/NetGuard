@@ -1,4 +1,4 @@
-mainHelp = """
+main_help = """
  Name                         Action
  ----                         ------
  [1] Tools                    Scan IP, Capture Packets, Block Websites, DDOS local devices.
@@ -13,7 +13,7 @@ mainHelp = """
 
 # -------------------------------------------------------------------------------------
 
-toolsHelp = """
+tools_help = """
  Name                         Action
  ----                         ------
  [1] Scan                     Gets every active IP address connected to your router.
@@ -29,7 +29,7 @@ toolsHelp = """
 
 # -------------------------------------------------------------------------------------
 
-usersHelp = """
+users_help = """
  Name                         Action
  ----                         ------
  [1] Display users            Displays every stored user. 

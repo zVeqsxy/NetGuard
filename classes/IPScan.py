@@ -2,25 +2,30 @@ from scapy.arch.windows import get_windows_if_list
 from scapy.layers.inet import IP, ICMP
 from scapy.layers.l2 import ARP
 from scapy.sendrecv import sr1, srp
-from scapy import sniff
+from scapy.all import sniff
 from tabulate import tabulate
 from tqdm import tqdm
 import threading
+import socket
 from getmac import get_mac_address
 
 import logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 
-from MySQL import MySqlCommands
+from classes.MySQL import MySqlCommands
 mysql = MySqlCommands()
+
+from lib.menu import active_addresses_label
 
 class IPScanner:
 	def __init__(self):
-		self.local_ip = "local-ip"  # local ip without the last octet (example: 192.168.1.13 = 192.168.1.)
+		# self.local_ip = socket.gethostbyname(socket.gethostname())  # get local ip with socket
+		# self.local_ip = "local-ip"  # local ip without the last octet (example: 192.168.1.13 = 192.168.1.)
+		self.local_ip = "192.168.2."
 		self.start_ip = 1
 		self.end_ip = 254
 		self.responsive_address = []
-		self.lock = threading.Lock()  # By using the lock in this scenario, we ensure that only one thread can access the responsive_address list at a time, preventing any conflicts or data corruption.
+		self.lock = threading.Lock()  # By using the lock in this scenario, we ensure that only one thread can access the responsive_address list at a time, preventing any conflicts or data corruption
 
 	def ping(self, target_ip):
 		# Create the ICMP echo request packet
@@ -49,7 +54,7 @@ class IPScanner:
 			ip_addr.append(ip)
 			mac_addr.append(mac)
 
-		names = mysql.getNames(IP=ip_addr, MAC=mac_addr)
+		names = mysql.getNames(mac_addr)
 		if names:
 			for name in names:
 				data.append([name[0], name[1], name[2], name[3], name[4]])
@@ -61,13 +66,7 @@ class IPScanner:
 		headers = ["First Name", "Last Name", "Description", "IP-address", "MAC-address"]
 		table = tabulate(data, headers=headers, tablefmt="fancy_grid", showindex="never")
 
-		print("""     _    ____ _____ _____     _______      _    ____  ____  ____  _____ ____ ____  _____ ____
-	/ \  / ___|_   _|_ _\ \   / / ____|    / \  |  _ \|  _ \|  _ \| ____/ ___/ ___|| ____/ ___|
-   / _ \| |     | |  | | \ \ / /|  _|     / _ \ | | | | | | | |_) |  _| \___ \___ \|  _| \___ \
-  / ___ \ |___  | |  | |  \ V / | |___   / ___ \| |_| | |_| |  _ <| |___ ___) |__) | |___ ___) |
- /_/   \_\____| |_| |___|  \_/  |_____| /_/   \_\____/|____/|_| \_\_____|____/____/|_____|____/
-																								""")
-
+		print(active_addresses_label)
 		print(table)
 
 	def startPing(self):
@@ -88,8 +87,9 @@ class IPScanner:
 		interfaces = get_windows_if_list()
 		interface_names = [interface['name'] for interface in interfaces]
 		interfaces_with_traffic = []
+		print(" Scanning Interfaces:")
 
-		with tqdm(total=len(interface_names), bar_format='{l_bar}{bar}|', ncols=50) as pbar:
+		with tqdm(total=len(interface_names), bar_format=' {l_bar}{bar}|', ncols=50) as pbar:
 			for interface in interface_names:
 				try:
 					packets = sniff(filter="", count=10, iface=interface, timeout=3)

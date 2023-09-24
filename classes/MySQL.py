@@ -62,12 +62,12 @@ class MySqlCommands():
 	def generateUniqueID(self):
 		try:
 			while True:
-				uniqueID = random.randint(100000000, 999999999)
-				self.cursor.execute("SELECT * FROM users WHERE UniqueID = %s ", (uniqueID,))
+				unique_ID = random.randint(100000000, 999999999)
+				self.cursor.execute("SELECT * FROM users WHERE UniqueID = %s ", (unique_ID,))
 				result = self.cursor.fetchone()
 				if result is None:
 					break
-			return uniqueID
+			return unique_ID
 		except Exception as e:
 			print(f" Generating unique ID failed: {str(e)}\n")
 			sys.exit(1)
@@ -75,9 +75,9 @@ class MySqlCommands():
 	def insertUser(self, Fname=None, Lname=None, Description=None, IP_address=None, Mac_address=None, Blocked_websites=None):
 		self.connectDB()
 
-		uniqueID = self.generateUniqueID()
+		unique_ID = self.generateUniqueID()
 		query = "INSERT INTO users VALUES(NULL, %s, %s, %s, %s, %s, %s, %s)"
-		values = (uniqueID, Fname, Lname, Description, IP_address, Mac_address, Blocked_websites)
+		values = (unique_ID, Fname, Lname, Description, IP_address, Mac_address, Blocked_websites)
 
 		try:
 			self.cursor.execute(query, values)
@@ -90,13 +90,13 @@ class MySqlCommands():
 
 		self.closeConnection()
 
-	def updateUser(self, column, new_value, ID_):
+	def updateUser(self, column, new_value, ID):
 		self.connectDB()
 
 		query = "UPDATE users SET {} = %s WHERE ID = %s".format(column)
 
 		try:
-			self.cursor.execute(query, (new_value, ID_))
+			self.cursor.execute(query, (new_value, ID))
 			self.connection.commit()
 			print(" Update successful.\n")
 
@@ -106,13 +106,13 @@ class MySqlCommands():
 
 		self.closeConnection()
 
-	def deleteUser(self, ID_):
+	def deleteUser(self, ID):
 		self.connectDB()
 
 		query = "DELETE FROM users WHERE ID = %s"
 		
 		try:
-			self.cursor.execute(query, (ID_,))
+			self.cursor.execute(query, (ID,))
 			self.connection.commit()
 			print(" User successfully deleted.\n")
 		except Exception as e:
@@ -127,19 +127,25 @@ class MySqlCommands():
 	def getAllInfo(self):
 		self.connectDB()
 
-		self.cursor.execute("SELECT * FROM users")
-		result = self.cursor.fetchall()
-		
+		try:
+			self.cursor.execute("SELECT * FROM users")
+			result = self.cursor.fetchall()
+		except Exception as e:
+			print(f" Query failed: {str(e)}\n")
+
 		self.closeConnection()
 		return result
 	
 	def getAllMacAddress(self):
 		self.connectDB()
 
-		self.cursor.execute("SELECT Mac_address FROM users")
-		query = self.cursor.fetchall()
-		result = [item[0] for item in query]
-		
+		try:
+			self.cursor.execute("SELECT Mac_address FROM users")
+			query = self.cursor.fetchall()
+			result = [item[0] for item in query]
+		except Exception as e:
+			print(f" Query failed: {str(e)}\n")
+
 		self.closeConnection()
 		return result
 
@@ -160,3 +166,18 @@ class MySqlCommands():
 
 		self.closeConnection()
 		return values
+	
+
+
+
+
+"""
+FIXME: 
+For each network this script is run on:
+	- create a database with the name of the network: "NetGuard_LunaTelekom", "NetGuard_Home", etc.
+	or
+	- create a table with the name of the network: "LunaTelekom", "Home", etc.
+	or
+	- create a new table "network_names" and store the names of the networks there with a primary key. and add a new column for the table "users" and connect the primary key from "network_names" to each user. (to know which user is connected to which network) 
+
+"""

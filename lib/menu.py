@@ -18,20 +18,26 @@ def header():
 """
 	print(header)
 
-
-def input_txt(location):
+def inputTxt(location):
 	text = " NetGuard(" + Fore.BLUE + location + Fore.RESET +")$ "
 	x = input(text)
 	return x
 
 
-def say_good_bye():
+def sayGoodBye():
 	print("\n[" + Fore.BLUE + "I" + Fore.RESET + "] Bye ! :)")
 
 
+active_addresses_label = """     _    ____ _____ _____     _______      _    ____  ____  ____  _____ ____ ____  _____ ____
+    / \  / ___|_   _|_ _\ \   / / ____|    / \  |  _ \|  _ \|  _ \| ____/ ___/ ___|| ____/ ___|
+   / _ \| |     | |  | | \ \ / /|  _|     / _ \ | | | | | | | |_) |  _| \___ \___ \|  _| \___ \\
+  / ___ \ |___  | |  | |  \ V / | |___   / ___ \| |_| | |_| |  _ <| |___ ___) |__) | |___ ___) |
+ /_/   \_\____| |_| |___|  \_/  |_____| /_/   \_\____/|____/|_| \_\_____|____/____/|_____|____/
+																								"""
+
 #############################################################################
 
-mainOptions = """
+main_options = """
  [1] Tools
  [2] Users
 
@@ -40,7 +46,7 @@ mainOptions = """
 
 # ----------------------------------------------------------------------------
 
-toolsOptions = """
+tools_options = """
  [1] Scan
  [2] Capture packets
  [3] Blocking websites
@@ -51,7 +57,7 @@ toolsOptions = """
 #----------------------------------------------------------------------------
 
 
-usersOptions = """
+users_options = """
  [1] Display users
  [2] Add users
  [3] Edit users
