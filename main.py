@@ -113,9 +113,6 @@ def sniffing():
     print(" Captured packets: ")
     print(packets)
 
-################################################################################################################################################################
-################################################################################################################################################################
-
 def isValidIP(address):
     try:
         ipaddress.IPv4Address(address)
@@ -323,14 +320,3 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         print(e)
-
-# packets = sniff(filter="", count=10, iface=interfaces)
-# packets = sniff(filter="host " + ip, count=10, iface=interfaces)
-# packets = sniff(filter="ether host " + mac, count=10, iface=interfaces)
-
-
-
-
-# 
-# IPScan.py: remove the ip address, add the socket function to get the ip address 
-# option to continue if database is not connected, but all database operations wont be available
