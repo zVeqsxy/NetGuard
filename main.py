@@ -22,7 +22,7 @@ scanner = IPScanner()
 mysql = MySqlCommands()
 sniffer = PacketSniffing()
 
-# start the loading animation until the scan for the connected devices is done
+# start loading animation until the scan for the connected devices is done
 def startLoading():
     num = random.choice([1, 2, 3])
 
@@ -235,11 +235,11 @@ def tools():
                 scanner.displayActiveAddress()
                 print(tools_options)
 
-            # TODO: make the function to capture packets
+            # TODO: create function to capture packets
             case "2":
                 sniffing()
 
-            # TODO: make the function to block websites
+            # TODO: create function to block websites
             case "3":
                 print("\n Coming soon..")
 
