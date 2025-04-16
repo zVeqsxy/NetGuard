@@ -166,18 +166,3 @@ class MySqlCommands():
 
 		self.closeConnection()
 		return values
-	
-
-
-
-
-"""
-FIXME: 
-For each network this script is run on:
-	- create a database with the name of the network: "NetGuard_LunaTelekom", "NetGuard_Home", etc.
-	or
-	- create a table with the name of the network: "LunaTelekom", "Home", etc.
-	or
-	- create a new table "network_names" and store the names of the networks there with a primary key. and add a new column for the table "users" and connect the primary key from "network_names" to each user. (to know which user is connected to which network) 
-
-"""
